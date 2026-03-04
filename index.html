@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Analisis Penduduk RT</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent1: #38bdf8;
+    --accent2: #f472b6;
+    --accent3: #34d399;
+    --accent4: #fb923c;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --k1: #38bdf8;
+    --k2: #f472b6;
+    --k3: #34d399;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; padding: 32px; max-width: 1400px; margin: 0 auto; }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-left h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .header-left p {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 4px;
+    font-weight: 300;
+  }
+
+  .badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  /* CARDS ROW */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+
+  .card:hover { transform: translateY(-2px); border-color: var(--accent1); }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent1), var(--accent2));
+  }
+
+  .card-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+
+  .card-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .card-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  .card-icon {
+    position: absolute;
+    top: 20px; right: 20px;
+    font-size: 1.5rem;
+    opacity: 0.15;
+  }
+
+  /* FILTER ROW */
+  .filter-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-right: 4px;
+  }
+
+  .filter-btn {
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+
+  .filter-btn:hover { border-color: var(--accent1); color: var(--accent1); }
+  .filter-btn.active { background: var(--accent1); border-color: var(--accent1); color: #000; font-weight: 600; }
+  .filter-btn.k1.active { background: var(--k1); border-color: var(--k1); }
+  .filter-btn.k2.active { background: var(--k2); border-color: var(--k2); }
+  .filter-btn.k3.active { background: var(--k3); border-color: var(--k3); }
+
+  /* GRID LAYOUT */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+  }
+
+  .panel-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+
+  .panel-sub {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+
+  .chart-wrap { position: relative; }
+
+  /* TABLE */
+  .rt-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .rt-table th {
+    text-align: left;
+    padding: 8px 12px;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+  }
+
+  .rt-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    color: var(--text);
+  }
+
+  .rt-table tr:hover td { background: var(--surface2); }
+
+  .kluster-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 600;
+  }
+
+  .k1-badge { background: rgba(56,189,248,0.15); color: var(--k1); }
+  .k2-badge { background: rgba(244,114,182,0.15); color: var(--k2); }
+  .k3-badge { background: rgba(52,211,153,0.15); color: var(--k3); }
+
+  .tabel-scroll { max-height: 340px; overflow-y: auto; }
+  .tabel-scroll::-webkit-scrollbar { width: 4px; }
+  .tabel-scroll::-webkit-scrollbar-track { background: transparent; }
+  .tabel-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* LEGEND */
+  .legend { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* GROWTH DISTRIBUTION */
+  .growth-bars { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+  .growth-item { display: flex; align-items: center; gap: 12px; }
+  .growth-label { font-size: 0.75rem; color: var(--text-muted); width: 60px; flex-shrink: 0; }
+  .growth-bar-bg { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .growth-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+  .growth-count { font-size: 0.75rem; color: var(--text); width: 30px; text-align: right; font-weight: 600; }
+
+  /* TIME SERIES SECTION */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 32px 0 24px;
+  }
+  .section-divider h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    white-space: nowrap;
+    background: linear-gradient(135deg, var(--accent3), var(--accent1));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .section-divider-line { flex: 1; height: 1px; background: var(--border); }
+
+  .rt-selector-wrap { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .rt-pill {
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .rt-pill:hover { border-color: var(--accent1); color: var(--accent1); }
+  .rt-pill.active { background: var(--accent1); border-color: var(--accent1); color: #000; font-weight: 600; }
+
+  .ts-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+  .ts-stat {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .ts-stat-label { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .ts-stat-value { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 700; margin-top: 4px; }
+  .pos { color: var(--accent3); }
+  .neg { color: #f87171; }
+  .neu { color: var(--accent1); }
+
+  footer {
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel, .card { animation: fadeUp 0.5s ease both; }
+  .card:nth-child(1) { animation-delay: 0.05s; }
+  .card:nth-child(2) { animation-delay: 0.1s; }
+  .card:nth-child(3) { animation-delay: 0.15s; }
+  .card:nth-child(4) { animation-delay: 0.2s; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="header-left">
+      <h1>Dashboard Analisis Penduduk RT</h1>
+      <p>Clustering K-Means · Time Series 2021–2025 · 35 RT</p>
+    </div>
+    <span class="badge">Data 2021–2025</span>
+  </header>
+
+  <!-- CARDS -->
+  <div class="cards">
+    <div class="card">
+      <div class="card-label">Total RT</div>
+      <div class="card-value">35</div>
+      <div class="card-sub">Wilayah dianalisis</div>
+      <div class="card-icon">📍</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Rata-rata Penduduk</div>
+      <div class="card-value" id="avgPop">—</div>
+      <div class="card-sub">Per RT (avg 2021–2025)</div>
+      <div class="card-icon">👥</div>
+    </div>
+    <div class="card">
+      <div class="card-label">RT Tertinggi</div>
+      <div class="card-value" id="maxRT">—</div>
+      <div class="card-sub" id="maxRTVal">—</div>
+      <div class="card-icon">📈</div>
+    </div>
+    <div class="card">
+      <div class="card-label">RT Terendah</div>
+      <div class="card-value" id="minRT">—</div>
+      <div class="card-sub" id="minRTVal">—</div>
+      <div class="card-icon">📉</div>
+    </div>
+  </div>
+
+  <!-- FILTER -->
+  <div class="filter-row">
+    <span class="filter-label">Filter Klaster:</span>
+    <button class="filter-btn active" onclick="filterKlaster('all', this)">Semua</button>
+    <button class="filter-btn k1" onclick="filterKlaster('Kluster1', this)">● Kluster 1 — Rendah</button>
+    <button class="filter-btn k2" onclick="filterKlaster('Kluster2', this)">● Kluster 2 — Tinggi</button>
+    <button class="filter-btn k3" onclick="filterKlaster('Kluster3', this)">● Kluster 3 — Sedang</button>
+  </div>
+
+  <!-- ROW 1: Line + Scatter -->
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title">Tren Rata-rata Penduduk per Klaster</div>
+      <div class="panel-sub">Perubahan jumlah penduduk 2021–2025</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--k1)"></div>Kluster 1</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--k2)"></div>Kluster 2</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--k3)"></div>Kluster 3</div>
+      </div>
+      <div class="chart-wrap"><canvas id="lineChart" height="200"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Scatter Plot Clustering RT</div>
+      <div class="panel-sub">Total penduduk vs laki-laki per RT</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--k1)"></div>Kluster 1</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--k2)"></div>Kluster 2</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--k3)"></div>Kluster 3</div>
+      </div>
+      <div class="chart-wrap"><canvas id="scatterChart" height="200"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Table + Growth dist -->
+  <div class="grid-3">
+    <div class="panel">
+      <div class="panel-title">Tabel RT per Klaster</div>
+      <div class="panel-sub">Rata-rata total penduduk 2021–2025</div>
+      <div class="tabel-scroll">
+        <table class="rt-table">
+          <thead>
+            <tr>
+              <th>RT</th>
+              <th>Klaster</th>
+              <th>Avg Penduduk</th>
+              <th>Avg Laki-laki</th>
+              <th>Avg Perempuan</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Distribusi Kategori Pertumbuhan</div>
+      <div class="panel-sub">Jumlah data per kategori YoY</div>
+      <div class="growth-bars" id="growthBars"></div>
+
+      <div style="margin-top:28px;">
+        <div class="panel-title">Komposisi Klaster</div>
+        <div class="panel-sub" style="margin-bottom:12px;">Jumlah RT per klaster</div>
+        <div class="chart-wrap"><canvas id="donutChart" height="160"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 3: Bar chart YoY -->
+  <div class="panel" style="margin-bottom:20px;">
+    <div class="panel-title">Rata-rata YoY per RT</div>
+    <div class="panel-sub">Pertumbuhan Year-over-Year rata-rata setiap RT (warna berdasarkan klaster)</div>
+    <div class="chart-wrap"><canvas id="barChart" height="100"></canvas></div>
+  </div>
+
+  <!-- TIME SERIES SECTION -->
+  <div class="section-divider">
+    <h2>📈 Analisis Deret Waktu (Time Series)</h2>
+    <div class="section-divider-line"></div>
+  </div>
+
+  <div class="panel" style="margin-bottom:20px;">
+    <div class="panel-title">Pilih RT untuk Melihat Tren Detail</div>
+    <div class="panel-sub">Klik RT di bawah untuk melihat analisis deret waktu lengkap</div>
+    <div class="rt-selector-wrap" id="rtSelector"></div>
+    <div class="ts-stats" id="tsStats"></div>
+    <div class="grid-2" style="margin-bottom:0;">
+      <div>
+        <div class="panel-title" style="margin-bottom:4px;">Tren Total Penduduk</div>
+        <div class="panel-sub">Jumlah penduduk per tahun</div>
+        <div class="chart-wrap"><canvas id="tsLineChart" height="180"></canvas></div>
+      </div>
+      <div>
+        <div class="panel-title" style="margin-bottom:4px;">Komposisi Laki-laki &amp; Perempuan</div>
+        <div class="panel-sub">Per tahun 2021–2025</div>
+        <div class="chart-wrap"><canvas id="tsBarGrouped" height="180"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title">YoY per Tahun — Rata-rata Semua RT</div>
+      <div class="panel-sub">Rata-rata pertumbuhan Year-over-Year tiap tahun</div>
+      <div class="chart-wrap"><canvas id="yoyByYear" height="200"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Tren Total Penduduk per Klaster</div>
+      <div class="panel-sub">Perbandingan tren antar klaster 2021–2025</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--k1)"></div>Kluster 1 (Rendah)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--k2)"></div>Kluster 2 (Sedang)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--k3)"></div>Kluster 3 (Tinggi)</div>
+      </div>
+      <div class="chart-wrap"><canvas id="tsKlasterArea" height="170"></canvas></div>
+    </div>
+  </div>
+
+  <footer>Dashboard Analisis Kependudukan · Tugas Akhir · Data 35 RT · 2021–2025</footer>
+</div>
+
+<script>
+// ============ RAW DATA ============
+const rawData = [
+  // [RT, Year, Male, Female, Total, YoY, GrowthCategory]
+  [1,2021,42,189,231,null,''],
+  [1,2022,739,305,1044,3.519,'Cepat'],
+  [1,2023,32,196,228,-0.782,'Negatif'],
+  [1,2024,667,89,756,2.316,'Cepat'],
+  [1,2025,174,846,1020,0.349,'Stabil'],
+  [2,2021,110,102,212,null,''],
+  [2,2022,87,37,124,-0.415,'Negatif'],
+  [2,2023,479,283,762,5.145,'Cepat'],
+  [2,2024,101,95,196,-0.743,'Negatif'],
+  [2,2025,750,502,1252,5.388,'Cepat'],
+  [3,2021,137,72,209,null,''],
+  [3,2022,80,29,109,-0.478,'Negatif'],
+  [3,2023,143,35,178,0.633,'Cepat'],
+  [3,2024,6,286,292,0.640,'Cepat'],
+  [3,2025,302,330,632,1.164,'Cepat'],
+  [4,2021,114,54,168,null,''],
+  [4,2022,122,170,292,0.738,'Cepat'],
+  [4,2023,65,64,129,-0.558,'Negatif'],
+  [4,2024,162,167,329,1.550,'Cepat'],
+  [4,2025,64,129,193,-0.413,'Negatif'],
+  [5,2021,217,378,595,null,''],
+  [5,2022,162,270,432,-0.274,'Negatif'],
+  [5,2023,228,579,807,0.868,'Cepat'],
+  [5,2024,212,872,1084,0.343,'Stabil'],
+  [5,2025,388,384,772,-0.288,'Negatif'],
+  [6,2021,54,65,119,null,''],
+  [6,2022,27,400,427,2.588,'Cepat'],
+  [6,2023,466,170,636,0.489,'Stabil'],
+  [6,2024,67,882,949,0.492,'Stabil'],
+  [6,2025,58,103,161,-0.830,'Negatif'],
+  [7,2021,6,499,505,null,''],
+  [7,2022,164,157,321,-0.364,'Negatif'],
+  [7,2023,25,19,44,-0.863,'Negatif'],
+  [7,2024,181,17,198,3.500,'Cepat'],
+  [7,2025,294,337,631,2.187,'Cepat'],
+  [8,2021,818,382,1200,null,''],
+  [8,2022,2,795,797,-0.336,'Negatif'],
+  [8,2023,75,10,85,-0.893,'Negatif'],
+  [8,2024,22,319,341,3.012,'Cepat'],
+  [8,2025,524,170,694,1.035,'Cepat'],
+  [9,2021,434,279,713,null,''],
+  [9,2022,126,161,287,-0.597,'Negatif'],
+  [9,2023,95,790,885,2.084,'Cepat'],
+  [9,2024,16,22,38,-0.957,'Negatif'],
+  [9,2025,642,305,947,23.921,'Cepat'],
+  [10,2021,36,190,226,null,''],
+  [10,2022,75,51,126,-0.442,'Negatif'],
+  [10,2023,202,821,1023,7.119,'Cepat'],
+  [10,2024,126,197,323,-0.684,'Negatif'],
+  [10,2025,166,140,306,-0.053,'Negatif'],
+  [11,2021,50,158,208,null,''],
+  [11,2022,503,28,531,1.553,'Cepat'],
+  [11,2023,447,11,458,-0.137,'Negatif'],
+  [11,2024,15,342,357,-0.221,'Negatif'],
+  [11,2025,37,149,186,-0.479,'Negatif'],
+  [12,2021,45,20,65,null,''],
+  [12,2022,273,310,583,7.969,'Cepat'],
+  [12,2023,3,134,137,-0.765,'Negatif'],
+  [12,2024,284,20,304,1.219,'Cepat'],
+  [12,2025,154,454,608,1.000,'Cepat'],
+  [13,2021,299,120,419,null,''],
+  [13,2022,538,389,927,1.212,'Cepat'],
+  [13,2023,176,75,251,-0.729,'Negatif'],
+  [13,2024,25,294,319,0.271,'Stabil'],
+  [13,2025,8,11,19,-0.940,'Negatif'],
+  [14,2021,147,252,399,null,''],
+  [14,2022,445,275,720,0.805,'Cepat'],
+  [14,2023,522,47,569,-0.210,'Negatif'],
+  [14,2024,955,250,1205,1.118,'Cepat'],
+  [14,2025,170,50,220,-0.817,'Negatif'],
+  [15,2021,42,384,426,null,''],
+  [15,2022,59,104,163,-0.617,'Negatif'],
+  [15,2023,355,47,402,1.466,'Cepat'],
+  [15,2024,272,26,298,-0.259,'Negatif'],
+  [15,2025,406,351,757,1.540,'Cepat'],
+  [16,2021,83,166,249,null,''],
+  [16,2022,367,266,633,1.542,'Cepat'],
+  [16,2023,324,51,375,-0.408,'Negatif'],
+  [16,2024,176,447,623,0.661,'Cepat'],
+  [16,2025,9,365,374,-0.400,'Negatif'],
+  [17,2021,16,112,128,null,''],
+  [17,2022,93,189,282,1.203,'Cepat'],
+  [17,2023,5,34,39,-0.862,'Negatif'],
+  [17,2024,383,286,669,16.154,'Cepat'],
+  [17,2025,77,19,96,-0.857,'Negatif'],
+  [18,2021,229,97,326,null,''],
+  [18,2022,57,123,180,-0.448,'Negatif'],
+  [18,2023,60,23,83,-0.539,'Negatif'],
+  [18,2024,244,140,384,3.627,'Cepat'],
+  [18,2025,423,5,428,0.115,'Stabil'],
+  [19,2021,721,259,980,null,''],
+  [19,2022,154,573,727,-0.258,'Negatif'],
+  [19,2023,577,414,991,0.363,'Stabil'],
+  [19,2024,4,18,22,-0.978,'Negatif'],
+  [19,2025,107,140,247,10.227,'Cepat'],
+  [20,2021,181,93,274,null,''],
+  [20,2022,11,218,229,-0.164,'Negatif'],
+  [20,2023,201,144,345,0.507,'Cepat'],
+  [20,2024,79,18,97,-0.719,'Negatif'],
+  [20,2025,527,117,644,5.639,'Cepat'],
+  [21,2021,222,681,903,null,''],
+  [21,2022,73,66,139,-0.846,'Negatif'],
+  [21,2023,83,125,208,0.496,'Stabil'],
+  [21,2024,5,96,101,-0.514,'Negatif'],
+  [21,2025,209,50,259,1.564,'Cepat'],
+  [22,2021,89,180,269,null,''],
+  [22,2022,88,117,205,-0.238,'Negatif'],
+  [22,2023,326,273,599,1.922,'Cepat'],
+  [22,2024,430,306,736,0.229,'Stabil'],
+  [22,2025,352,60,412,-0.440,'Negatif'],
+  [23,2021,58,213,271,null,''],
+  [23,2022,372,104,476,0.756,'Cepat'],
+  [23,2023,79,137,216,-0.546,'Negatif'],
+  [23,2024,583,229,812,2.759,'Cepat'],
+  [23,2025,57,20,77,-0.905,'Negatif'],
+  [24,2021,320,317,637,null,''],
+  [24,2022,211,34,245,-0.615,'Negatif'],
+  [24,2023,56,321,377,0.539,'Cepat'],
+  [24,2024,579,13,592,0.570,'Cepat'],
+  [24,2025,226,191,417,-0.296,'Negatif'],
+  [25,2021,11,66,77,null,''],
+  [25,2022,29,111,140,0.818,'Cepat'],
+  [25,2023,139,295,434,2.100,'Cepat'],
+  [25,2024,203,120,323,-0.256,'Negatif'],
+  [25,2025,134,206,340,0.053,'Stabil'],
+  [26,2021,489,529,1018,null,''],
+  [26,2022,803,73,876,-0.139,'Negatif'],
+  [26,2023,205,251,456,-0.479,'Negatif'],
+  [26,2024,45,164,209,-0.542,'Negatif'],
+  [26,2025,202,174,376,0.799,'Cepat'],
+  [27,2021,851,71,922,null,''],
+  [27,2022,384,46,430,-0.534,'Negatif'],
+  [27,2023,34,131,165,-0.616,'Negatif'],
+  [27,2024,337,352,689,3.176,'Cepat'],
+  [27,2025,31,278,309,-0.552,'Negatif'],
+  [28,2021,15,181,196,null,''],
+  [28,2022,8,47,55,-0.719,'Negatif'],
+  [28,2023,58,307,365,5.636,'Cepat'],
+  [28,2024,21,112,133,-0.636,'Negatif'],
+  [28,2025,209,219,428,2.218,'Cepat'],
+  [29,2021,227,4,231,null,''],
+  [29,2022,175,171,346,0.498,'Stabil'],
+  [29,2023,418,68,486,0.405,'Stabil'],
+  [29,2024,484,601,1085,1.233,'Cepat'],
+  [29,2025,107,68,175,-0.839,'Negatif'],
+  [30,2021,49,223,272,null,''],
+  [30,2022,101,43,144,-0.471,'Negatif'],
+  [30,2023,781,134,915,5.354,'Cepat'],
+  [30,2024,101,246,347,-0.621,'Negatif'],
+  [30,2025,153,63,216,-0.378,'Negatif'],
+  [31,2021,175,722,897,null,''],
+  [31,2022,511,402,913,0.018,'Stabil'],
+  [31,2023,123,434,557,-0.390,'Negatif'],
+  [31,2024,333,17,350,-0.372,'Negatif'],
+  [31,2025,110,201,311,-0.111,'Negatif'],
+  [32,2021,83,45,128,null,''],
+  [32,2022,157,259,416,2.250,'Cepat'],
+  [32,2023,563,640,1203,1.892,'Cepat'],
+  [32,2024,346,32,378,-0.686,'Negatif'],
+  [32,2025,94,70,164,-0.566,'Negatif'],
+  [33,2021,731,37,768,null,''],
+  [33,2022,65,516,581,-0.243,'Negatif'],
+  [33,2023,17,120,137,-0.764,'Negatif'],
+  [33,2024,67,321,388,1.832,'Cepat'],
+  [33,2025,14,741,755,0.946,'Cepat'],
+  [34,2021,373,222,595,null,''],
+  [34,2022,47,479,526,-0.116,'Negatif'],
+  [34,2023,161,238,399,-0.241,'Negatif'],
+  [34,2024,40,15,55,-0.862,'Negatif'],
+  [34,2025,174,217,391,6.109,'Cepat'],
+  [35,2021,224,3,227,null,''],
+  [35,2022,646,73,719,2.167,'Cepat'],
+  [35,2023,281,14,295,-0.590,'Negatif'],
+  [35,2024,236,94,330,0.119,'Stabil'],
+  [35,2025,472,80,552,0.673,'Cepat'],
+];
+
+// ============ COMPUTE RT SUMMARIES ============
+const rtNums = [...new Set(rawData.map(d => d[0]))].sort((a,b)=>a-b);
+
+function avg(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : 0; }
+
+const rtSummary = rtNums.map(rt => {
+  const rows = rawData.filter(d => d[0] === rt);
+  return {
+    rt,
+    avgTotal: avg(rows.map(d=>d[4])),
+    avgMale: avg(rows.map(d=>d[2])),
+    avgFemale: avg(rows.map(d=>d[3])),
+    avgYoY: avg(rows.filter(d=>d[5]!==null).map(d=>d[5])),
+    byYear: rows.map(d=>({year:d[1], total:d[4], male:d[2], female:d[3]}))
+  };
+});
+
+// Simple K-Means (k=3) based on avgTotal
+function kmeans(data, k=3, iters=100) {
+  const vals = data.map(d=>d.avgTotal);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  let centroids = [min + (max-min)*0.2, min + (max-min)*0.5, min + (max-min)*0.8];
+  let labels = new Array(data.length).fill(0);
+  for(let i=0;i<iters;i++){
+    labels = data.map(d => {
+      const dists = centroids.map(c => Math.abs(d.avgTotal - c));
+      return dists.indexOf(Math.min(...dists));
+    });
+    for(let c=0;c<k;c++){
+      const pts = data.filter((_,idx)=>labels[idx]===c).map(d=>d.avgTotal);
+      if(pts.length) centroids[c] = avg(pts);
+    }
+  }
+  // sort clusters so 0=lowest, 1=mid, 2=highest
+  const cOrder = centroids.map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v).map(x=>x.i);
+  const remap = {}; cOrder.forEach((orig,newIdx)=>remap[orig]=newIdx);
+  return labels.map(l=>remap[l]);
+}
+
+const clusterLabels = kmeans(rtSummary);
+const clusterNames = ['Kluster1','Kluster2','Kluster3'];
+const clusterDisplay = ['Kluster 1 (Rendah)','Kluster 2 (Sedang)','Kluster 3 (Tinggi)'];
+
+rtSummary.forEach((rt, i) => { rt.kluster = clusterLabels[i]; });
+
+// ============ CARDS ============
+const allAvg = avg(rtSummary.map(d=>d.avgTotal));
+document.getElementById('avgPop').textContent = Math.round(allAvg).toLocaleString('id');
+
+const sorted = [...rtSummary].sort((a,b)=>b.avgTotal-a.avgTotal);
+document.getElementById('maxRT').textContent = 'RT ' + sorted[0].rt;
+document.getElementById('maxRTVal').textContent = 'Rata-rata ' + Math.round(sorted[0].avgTotal).toLocaleString('id') + ' jiwa';
+document.getElementById('minRT').textContent = 'RT ' + sorted[sorted.length-1].rt;
+document.getElementById('minRTVal').textContent = 'Rata-rata ' + Math.round(sorted[sorted.length-1].avgTotal).toLocaleString('id') + ' jiwa';
+
+// ============ TABLE ============
+function renderTable(filterKluster) {
+  const tbody = document.getElementById('tableBody');
+  const data = filterKluster === 'all' ? rtSummary : rtSummary.filter(d=>clusterNames[d.kluster]===filterKluster);
+  tbody.innerHTML = data.map(d => `
+    <tr>
+      <td>RT ${d.rt}</td>
+      <td><span class="kluster-badge k${d.kluster+1}-badge">${clusterNames[d.kluster]}</span></td>
+      <td>${Math.round(d.avgTotal).toLocaleString('id')}</td>
+      <td>${Math.round(d.avgMale).toLocaleString('id')}</td>
+      <td>${Math.round(d.avgFemale).toLocaleString('id')}</td>
+    </tr>
+  `).join('');
+}
+renderTable('all');
+
+// ============ GROWTH DISTRIBUTION ============
+const growthCats = ['Cepat','Stabil','Negatif'];
+const growthColors = ['#34d399','#38bdf8','#f87171'];
+const growthCounts = growthCats.map(cat => rawData.filter(d=>d[6]===cat).length);
+const maxG = Math.max(...growthCounts);
+
+document.getElementById('growthBars').innerHTML = growthCats.map((cat,i) => `
+  <div class="growth-item">
+    <div class="growth-label">${cat}</div>
+    <div class="growth-bar-bg">
+      <div class="growth-bar-fill" style="width:${(growthCounts[i]/maxG*100)}%;background:${growthColors[i]}"></div>
+    </div>
+    <div class="growth-count">${growthCounts[i]}</div>
+  </div>
+`).join('');
+
+// ============ CHARTS ============
+const years = [2021,2022,2023,2024,2025];
+const colors = ['#38bdf8','#f472b6','#34d399'];
+
+// Line Chart
+const lineDatasets = [0,1,2].map(k => ({
+  label: clusterDisplay[k],
+  data: years.map(yr => {
+    const rts = rtSummary.filter(d=>d.kluster===k);
+    return avg(rts.map(rt => rt.byYear.find(y=>y.year===yr)?.total || 0));
+  }),
+  borderColor: colors[k],
+  backgroundColor: colors[k]+'22',
+  borderWidth: 2.5,
+  pointRadius: 5,
+  pointHoverRadius: 7,
+  tension: 0.3,
+  fill: true,
+}));
+
+new Chart(document.getElementById('lineChart'), {
+  type: 'line',
+  data: { labels: years, datasets: lineDatasets },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: '#1e2d45' }, ticks: { color: '#64748b' } },
+      y: { grid: { color: '#1e2d45' }, ticks: { color: '#64748b' } }
+    }
+  }
+});
+
+// Scatter Chart
+new Chart(document.getElementById('scatterChart'), {
+  type: 'scatter',
+  data: {
+    datasets: [0,1,2].map(k => ({
+      label: clusterDisplay[k],
+      data: rtSummary.filter(d=>d.kluster===k).map(d=>({x:d.avgTotal, y:d.avgMale, rt:d.rt})),
+      backgroundColor: colors[k]+'cc',
+      pointRadius: 7,
+      pointHoverRadius: 9,
+    }))
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => `RT ${ctx.raw.rt}: Total=${Math.round(ctx.raw.x)}, Laki=${Math.round(ctx.raw.y)}` }}
+    },
+    scales: {
+      x: { grid: { color: '#1e2d45' }, ticks: { color: '#64748b' }, title: { display: true, text: 'Avg Total Penduduk', color: '#64748b' } },
+      y: { grid: { color: '#1e2d45' }, ticks: { color: '#64748b' }, title: { display: true, text: 'Avg Laki-laki', color: '#64748b' } }
+    }
+  }
+});
+
+// Donut Chart
+const klusterCounts = [0,1,2].map(k => rtSummary.filter(d=>d.kluster===k).length);
+new Chart(document.getElementById('donutChart'), {
+  type: 'doughnut',
+  data: {
+    labels: clusterDisplay,
+    datasets: [{ data: klusterCounts, backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }]
+  },
+  options: {
+    responsive: true,
+    cutout: '65%',
+    plugins: {
+      legend: { position: 'bottom', labels: { color: '#64748b', font: { size: 11 }, padding: 12 } }
+    }
+  }
+});
+
+// Bar Chart YoY
+new Chart(document.getElementById('barChart'), {
+  type: 'bar',
+  data: {
+    labels: rtSummary.map(d=>'RT '+d.rt),
+    datasets: [{
+      label: 'Avg YoY',
+      data: rtSummary.map(d=>+d.avgYoY.toFixed(2)),
+      backgroundColor: rtSummary.map(d=>colors[d.kluster]+'bb'),
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: '#1e2d45' }, ticks: { color: '#64748b', font: { size: 10 } } },
+      y: { grid: { color: '#1e2d45' }, ticks: { color: '#64748b' } }
+    }
+  }
+});
+
+// ============ FILTER ============
+function filterKlaster(kluster, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable(kluster);
+}
+
+// ============ TIME SERIES ============
+
+// RT Selector Pills
+let selectedRT = 1;
+let tsLine, tsBar;
+
+document.getElementById('rtSelector').innerHTML = rtNums.map(rt => {
+  const s = rtSummary.find(d=>d.rt===rt);
+  return `<button class="rt-pill${rt===1?' active':''} k${s.kluster+1}-pill" onclick="selectRT(${rt},this)">RT ${rt}</button>`;
+}).join('');
+
+// Add pill active colors
+const styleEl = document.createElement('style');
+styleEl.textContent = `.k1-pill.active{background:var(--k1);border-color:var(--k1);color:#000;font-weight:600}
+.k2-pill.active{background:var(--k2);border-color:var(--k2);color:#000;font-weight:600}
+.k3-pill.active{background:var(--k3);border-color:var(--k3);color:#000;font-weight:600}`;
+document.head.appendChild(styleEl);
+
+function selectRT(rt, btn) {
+  selectedRT = rt;
+  document.querySelectorAll('.rt-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateTSCharts();
+}
+
+function updateTSCharts() {
+  const rt = rtSummary.find(d=>d.rt===selectedRT);
+  const rows = rawData.filter(d=>d[0]===selectedRT);
+  const totals = years.map(yr => rows.find(r=>r[1]===yr)?.[4] || 0);
+  const males = years.map(yr => rows.find(r=>r[1]===yr)?.[2] || 0);
+  const females = years.map(yr => rows.find(r=>r[1]===yr)?.[3] || 0);
+  const yoys = rows.filter(d=>d[5]!==null).map(d=>d[5]);
+  const maxPop = Math.max(...totals);
+  const minPop = Math.min(...totals);
+  const avgYoY = avg(yoys);
+  const trend = totals[totals.length-1] - totals[0];
+  const klusterColor = colors[rt.kluster];
+
+  // Stats
+  document.getElementById('tsStats').innerHTML = `
+    <div class="ts-stat">
+      <div class="ts-stat-label">Klaster</div>
+      <div class="ts-stat-value neu">K${rt.kluster+1}</div>
+    </div>
+    <div class="ts-stat">
+      <div class="ts-stat-label">Maks Penduduk</div>
+      <div class="ts-stat-value pos">${maxPop.toLocaleString('id')}</div>
+    </div>
+    <div class="ts-stat">
+      <div class="ts-stat-label">Min Penduduk</div>
+      <div class="ts-stat-value neg">${minPop.toLocaleString('id')}</div>
+    </div>
+    <div class="ts-stat">
+      <div class="ts-stat-label">Tren 2021→2025</div>
+      <div class="ts-stat-value ${trend>=0?'pos':'neg'}">${trend>=0?'+':''}${trend.toLocaleString('id')}</div>
+    </div>
+  `;
+
+  // Line Chart
+  if(tsLine) tsLine.destroy();
+  tsLine = new Chart(document.getElementById('tsLineChart'), {
+    type: 'line',
+    data: {
+      labels: years,
+      datasets: [{
+        label: 'Total Penduduk',
+        data: totals,
+        borderColor: klusterColor,
+        backgroundColor: klusterColor+'22',
+        borderWidth: 2.5,
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        fill: true,
+        tension: 0.3,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: '#1e2d45' }, ticks: { color: '#64748b' } },
+        y: { grid: { color: '#1e2d45' }, ticks: { color: '#64748b' }, beginAtZero: true }
+      }
+    }
+  });
+
+  // Bar Grouped
+  if(tsBar) tsBar.destroy();
+  tsBar = new Chart(document.getElementById('tsBarGrouped'), {
+    type: 'bar',
+    data: {
+      labels: years,
+      datasets: [
+        { label: 'Laki-laki', data: males, backgroundColor: '#38bdf8bb', borderRadius: 4 },
+        { label: 'Perempuan', data: females, backgroundColor: '#f472b6bb', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#64748b', font: { size: 11 } } } },
+      scales: {
+        x: { grid: { color: '#1e2d45' }, ticks: { color: '#64748b' } },
+        y: { grid: { color: '#1e2d45' }, ticks: { color: '#64748b' }, beginAtZero: true }
+      }
+    }
+  });
+}
+updateTSCharts();
+
+// YoY by Year chart
+const yoyByYearData = [2022,2023,2024,2025].map(yr => {
+  const vals = rawData.filter(d=>d[1]===yr && d[5]!==null).map(d=>d[5]);
+  return +avg(vals).toFixed(2);
+});
+
+new Chart(document.getElementById('yoyByYear'), {
+  type: 'bar',
+  data: {
+    labels: ['2022','2023','2024','2025'],
+    datasets: [{
+      label: 'Rata-rata YoY',
+      data: yoyByYearData,
+      backgroundColor: yoyByYearData.map(v => v >= 0 ? '#34d39988' : '#f8717188'),
+      borderColor: yoyByYearData.map(v => v >= 0 ? '#34d399' : '#f87171'),
+      borderWidth: 1.5,
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: '#1e2d45' }, ticks: { color: '#64748b' } },
+      y: { grid: { color: '#1e2d45' }, ticks: { color: '#64748b' } }
+    }
+  }
+});
+
+// Klaster Area Chart
+const klasterAreaDatasets = [0,1,2].map(k => ({
+  label: ['Kluster 1 (Rendah)','Kluster 2 (Sedang)','Kluster 3 (Tinggi)'][k],
+  data: years.map(yr => {
+    const rts = rtSummary.filter(d=>d.kluster===k);
+    return Math.round(avg(rts.map(rt => rt.byYear.find(y=>y.year===yr)?.total || 0)));
+  }),
+  borderColor: colors[k],
+  backgroundColor: colors[k]+'18',
+  borderWidth: 2.5,
+  pointRadius: 5,
+  tension: 0.4,
+  fill: true,
+}));
+
+new Chart(document.getElementById('tsKlasterArea'), {
+  type: 'line',
+  data: { labels: years, datasets: klasterAreaDatasets },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: '#1e2d45' }, ticks: { color: '#64748b' } },
+      y: { grid: { color: '#1e2d45' }, ticks: { color: '#64748b' }, beginAtZero: true }
+    }
+  }
+});
+</script>
+</body>
+</html>
